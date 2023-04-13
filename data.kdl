@@ -1,0 +1,14 @@
+verbs {
+    verb 0 "quit"
+    verb 1 "i"
+    verb 1 "inv"
+    verb 1 "inventory"
+    verb 2 "n"
+    verb 2 "north"
+    verb 3 "s"
+    verb 3 "south"
+    verb 4 "w"
+    verb 4 "west"
+    verb 5 "e"
+    verb 5 "east"
+}

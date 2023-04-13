@@ -1,10 +1,18 @@
-use std::io::{stdin, stdout, Write};
+#![allow(unused)]
+
+use std::{
+    collections::HashMap,
+    fs::read_to_string,
+    io::{stdin, stdout, Write},
+};
+
+use knuffel::{parse, Decode};
 
 /// A verb is either unknown or known.
 ///
 /// Represents the first word in a command.
 #[derive(Debug, PartialEq, Eq)]
-enum Verb {
+enum VerbReference {
     /// No verbs were given.
     None,
 
@@ -16,11 +24,43 @@ enum Verb {
     Known(u32),
 }
 
+#[derive(Decode, Debug)]
+enum Database {
+    Verbs(Verbs),
+}
+
+#[derive(Decode, Debug)]
+struct Verbs {
+    #[knuffel(children(name = "verb"))]
+    pub verbs: Vec<Verb>,
+}
+
+#[derive(Decode, Debug)]
+struct Verb {
+    #[knuffel(argument)]
+    pub index: u32,
+    #[knuffel(argument)]
+    pub text: String,
+}
+
 fn main() {
+    // Read the KDL file
+    let kdl = read_to_string("data.kdl").unwrap();
+    let data = parse::<Vec<Database>>("data.kdl", &kdl).unwrap();
+
+    let mut verb_map = HashMap::new();
+    for data in data {
+        match data {
+            Database::Verbs(verbs) => {
+                for verb in verbs.verbs {
+                    verb_map.insert(verb.text, verb.index);
+                }
+            }
+        }
+    }
+
     let stdin = stdin();
     let mut stdout = stdout();
-
-    let verbs = vec!["quit"];
 
     loop {
         print!("> ");
@@ -35,24 +75,24 @@ fn main() {
 
         // Find the verb.
         let verb = if words.len() == 0 {
-            Verb::None
+            VerbReference::None
         } else {
             let verb = &words[0];
-            if let Some(index) = verbs.iter().position(|v| v == verb) {
-                Verb::Known(index as u32)
-            } else {
-                Verb::Unknown
-            }
+
+            verb_map
+                .get(verb)
+                .map(|i| VerbReference::Known(*i))
+                .unwrap_or(VerbReference::Unknown)
         };
 
         match verb {
-            Verb::None => println!("Pardon?"),
-            Verb::Unknown => println!("I don't understand that."),
-            Verb::Known(0) => {
+            VerbReference::None => println!("Pardon?"),
+            VerbReference::Unknown => println!("I don't understand that."),
+            VerbReference::Known(0) => {
                 println!("Goodbye!");
                 return;
             }
-            _ => unreachable!(),
+            VerbReference::Known(index) => println!("Verb index: {}", index),
         }
     }
 }
