@@ -5,6 +5,9 @@ use std::io::{stdin, stdout, Write};
 /// Represents the first word in a command.
 #[derive(Debug, PartialEq, Eq)]
 enum Verb {
+    /// No verbs were given.
+    None,
+
     /// The verb is unknown.
     Unknown,
 
@@ -32,7 +35,7 @@ fn main() {
 
         // Find the verb.
         let verb = if words.len() == 0 {
-            Verb::Unknown
+            Verb::None
         } else {
             let verb = &words[0];
             if let Some(index) = verbs.iter().position(|v| v == verb) {
@@ -42,12 +45,14 @@ fn main() {
             }
         };
 
-        println!("{:?}", words);
-        println!("{:?}", verb);
-
-        // Quit the game.
-        if verb == Verb::Known(0) {
-            break;
+        match verb {
+            Verb::None => println!("Pardon?"),
+            Verb::Unknown => println!("I don't understand that."),
+            Verb::Known(0) => {
+                println!("Goodbye!");
+                return;
+            }
+            _ => unreachable!(),
         }
     }
 }
